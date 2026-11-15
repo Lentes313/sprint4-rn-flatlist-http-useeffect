@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-import { COLORS } from '../config/constants';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, TextInput, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { COLORS, DEBOUNCE_MS } from '../config/constants';
 import { getCharacters } from '../services/charactersService';
 import CharacterCard from '../components/CharacterCard';
 import StateMessage from '../components/StateMessage';
@@ -31,42 +31,73 @@ export default function CharactersScreen() {
   // Pull to refresh: estado propio para no esconder la lista mientras se actualiza.
   const [refreshing, setRefreshing] = useState(false);
 
-  // Carga inicial: al montar la pantalla y cada vez que cambia reloadKey.
+  // Búsqueda: lo que se escribe (cambia en cada tecla) y lo que se busca (después del debounce).
+  const [searchText, setSearchText] = useState('');
+  const [query, setQuery] = useState('');
+  // Búsqueda vigente, para descartar respuestas de "cargar más" o "actualizar" que llegan tarde.
+  const latestQueryRef = useRef(query);
+
+  // Debounce: copia el texto a `query` solo cuando el usuario deja de escribir DEBOUNCE_MS.
   useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setQuery(searchText);
+    }, DEBOUNCE_MS);
+
+    // Limpieza: si llega otra tecla antes de tiempo, el temporizador anterior se cancela.
+    return () => clearTimeout(timeoutId);
+  }, [searchText]);
+
+  // Carga de la página 1: al montar, al reintentar y cada vez que cambia la búsqueda.
+  useEffect(() => {
+    // Si la búsqueda cambia mientras esta petición sigue en camino, su respuesta se ignora.
+    let ignore = false;
+    latestQueryRef.current = query;
+
     // La función del efecto no puede ser async (debe devolver nada o una limpieza),
     // así que la petición va en una función async interna.
     async function loadFirstPage() {
       setLoading(true);
       setError(null);
       try {
-        const data = await getCharacters({ page: 1 });
+        const data = await getCharacters({ page: 1, name: query });
+        if (ignore) return;
         setCharacters(data.results);
         setPage(1);
         setHasNextPage(data.hasNextPage);
       } catch (err) {
+        if (ignore) return;
+        setCharacters([]);
+        setHasNextPage(false);
         setError(err.message);
       } finally {
-        setLoading(false);
+        if (!ignore) setLoading(false);
       }
     }
 
     loadFirstPage();
-  }, [reloadKey]);
+
+    return () => {
+      ignore = true;
+    };
+  }, [query, reloadKey]);
 
   async function loadMore() {
     // No tiene sentido pedir más si ya hay una carga en curso, si la API dijo
     // que no hay página siguiente o si quedó un error pendiente.
     if (loading || loadingMore || refreshing || !hasNextPage || error) return;
 
+    const requestedQuery = query;
     const nextPage = page + 1;
     setLoadingMore(true);
     try {
-      const data = await getCharacters({ page: nextPage });
+      const data = await getCharacters({ page: nextPage, name: requestedQuery });
+      if (requestedQuery !== latestQueryRef.current) return;
       // Arreglo nuevo con los anteriores + los nuevos (no se modifica el anterior).
       setCharacters((current) => [...current, ...data.results]);
       setPage(nextPage);
       setHasNextPage(data.hasNextPage);
     } catch (err) {
+      if (requestedQuery !== latestQueryRef.current) return;
       // Se guarda el error sin borrar los personajes ya cargados.
       setError(err.message);
     } finally {
@@ -78,15 +109,18 @@ export default function CharactersScreen() {
     // Si se está cargando la página siguiente, se espera a que termine.
     if (loading || loadingMore) return;
 
+    const requestedQuery = query;
     setRefreshing(true);
     setError(null);
     try {
-      const data = await getCharacters({ page: 1 });
+      const data = await getCharacters({ page: 1, name: requestedQuery });
+      if (requestedQuery !== latestQueryRef.current) return;
       // Se reemplaza toda la lista y se reinicia la paginación.
       setCharacters(data.results);
       setPage(1);
       setHasNextPage(data.hasNextPage);
     } catch (err) {
+      if (requestedQuery !== latestQueryRef.current) return;
       setError(err.message);
     } finally {
       setRefreshing(false);
@@ -126,6 +160,7 @@ export default function CharactersScreen() {
         ListFooterComponent={renderFooter}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        keyboardShouldPersistTaps="handled"
       />
     );
   }
@@ -133,6 +168,19 @@ export default function CharactersScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Rick and Morty</Text>
+
+      {/* Fuera de `content` para que no se desmonte (ni se cierre el teclado) al cargar. */}
+      <TextInput
+        style={styles.input}
+        value={searchText}
+        onChangeText={setSearchText}
+        placeholder="Buscar personaje por nombre…"
+        placeholderTextColor={COLORS.textMuted}
+        autoCorrect={false}
+        autoCapitalize="none"
+        clearButtonMode="while-editing"
+        returnKeyType="search"
+      />
 
       {content}
     </View>
