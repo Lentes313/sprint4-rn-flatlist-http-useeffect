@@ -2,7 +2,7 @@
 
 _Escribe tus respuestas debajo de cada pregunta._
 
-**Alumno:** 
+**Alumno:** Emmanuel (Lentes313)
 
 ---
 
@@ -88,4 +88,4 @@ _Escribe tus respuestas debajo de cada pregunta._
 
 **Menciona dos mejoras que le harías a la app si tuvieras una hora más:**
 
-> 
+> 1. Cancelar de verdad las peticiones viejas con `AbortController` (reto A) en lugar de solo ignorar su respuesta, para no gastar red. 2. Una pantalla de detalle al tocar una tarjeta (reto D), pidiendo `/character/{id}` en un `useEffect` que dependa del `id`, y agregar filtros por estado (Alive / Dead / unknown).
