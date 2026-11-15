@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { COLORS } from '../config/constants';
 import { getCharacters } from '../services/charactersService';
 import CharacterCard from '../components/CharacterCard';
+import StateMessage from '../components/StateMessage';
 
 // Estilos disponibles: container, title, input, loader, separator, listContent, footer, footerError
 
@@ -10,12 +11,16 @@ export default function CharactersScreen() {
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Contador que cambia al presionar "Reintentar" para volver a ejecutar el efecto de carga.
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Primera carga: se ejecuta una sola vez al montar la pantalla (arreglo de dependencias vacío).
+  // Carga inicial: al montar la pantalla y cada vez que cambia reloadKey.
   useEffect(() => {
     // La función del efecto no puede ser async (debe devolver nada o una limpieza),
     // así que la petición va en una función async interna.
     async function loadFirstPage() {
+      setLoading(true);
+      setError(null);
       try {
         const data = await getCharacters({ page: 1 });
         setCharacters(data.results);
@@ -27,18 +32,33 @@ export default function CharactersScreen() {
     }
 
     loadFirstPage();
-  }, []);
+  }, [reloadKey]);
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Rick and Morty</Text>
+  function handleRetry() {
+    setReloadKey((current) => current + 1);
+  }
 
+  let content;
+  if (loading) {
+    content = <ActivityIndicator style={styles.loader} size="large" color={COLORS.primary} />;
+  } else if (error && characters.length === 0) {
+    content = <StateMessage message={error} actionLabel="Reintentar" onAction={handleRetry} />;
+  } else {
+    content = (
       <FlatList
         data={characters}
         renderItem={({ item }) => <CharacterCard character={item} />}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.listContent}
       />
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Rick and Morty</Text>
+
+      {content}
     </View>
   );
 }
