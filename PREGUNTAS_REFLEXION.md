@@ -20,7 +20,7 @@ _Escribe tus respuestas debajo de cada pregunta._
 
 **¿Qué diferencia hay entre que `fetch` "falle" y que el servidor responda con un error? ¿Qué debo revisar en la respuesta?**
 
-> 
+> La promesa de `fetch` solo se rechaza cuando no se pudo hacer la petición: sin internet, DNS que no resuelve, el servidor no contesta, etc. Si el servidor sí contesta, aunque sea con un 404 o un 500, `fetch` se resuelve normal y la respuesta llega como "exitosa" para JavaScript. Por eso hay que revisar `response.ok` (es `true` solo con códigos 200–299) y `response.status` (el código numérico). En mi servicio, el 404 lo trato como "sin resultados" y cualquier otro código que no sea `ok` lanza un `Error` con el código.
 
 ## Paso 3 · Estado
 
