@@ -46,11 +46,11 @@ _Escribe tus respuestas debajo de cada pregunta._
 
 1. **¿Para qué sirve la prop que extrae la llave de cada elemento?**
 
-> 
+> `keyExtractor` le da a cada elemento una llave única y estable (yo uso `String(item.id)`, porque React espera un texto). Con esa llave React sabe qué elemento es cuál cuando la lista cambia: reutiliza los que ya existen, agrega solo los nuevos y no muestra la advertencia de *keys*.
 
 2. **¿Por qué usar `FlatList` en lugar de un `ScrollView` con `.map()`?**
 
-> 
+> `ScrollView` dibuja todos sus hijos al mismo tiempo, así que con cientos de personajes se gastaría mucha memoria y la app se pondría lenta. `FlatList` virtualiza: solo renderiza lo que se ve en pantalla (más un margen) y va reciclando conforme te desplazas. Además ya trae props para separadores, lista vacía, pie de lista, paginación (`onEndReached`) y pull to refresh.
 
 ## Paso 6 · Carga y error
 

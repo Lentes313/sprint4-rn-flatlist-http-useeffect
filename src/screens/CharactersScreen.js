@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { COLORS } from '../config/constants';
 import { getCharacters } from '../services/charactersService';
+import CharacterCard from '../components/CharacterCard';
 
 // Estilos disponibles: container, title, input, loader, separator, listContent, footer, footerError
 
@@ -32,9 +33,12 @@ export default function CharactersScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Rick and Morty</Text>
 
-      <Text style={styles.placeholder}>
-        {loading ? 'Cargando…' : `Personajes cargados: ${characters.length}`}
-      </Text>
+      <FlatList
+        data={characters}
+        renderItem={({ item }) => <CharacterCard character={item} />}
+        keyExtractor={(item) => String(item.id)}
+        contentContainerStyle={styles.listContent}
+      />
     </View>
   );
 }
@@ -62,5 +66,4 @@ const styles = StyleSheet.create({
   listContent: { paddingBottom: 24 },
   footer: { marginVertical: 16 },
   footerError: { color: COLORS.danger, textAlign: 'center', marginVertical: 16 },
-  placeholder: { color: COLORS.textMuted, fontSize: 16, marginTop: 24 },
 });
