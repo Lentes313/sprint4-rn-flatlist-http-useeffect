@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORS } from '../config/constants';
 import { getCharacters } from '../services/charactersService';
@@ -10,11 +10,31 @@ export default function CharactersScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Primera carga: se ejecuta una sola vez al montar la pantalla (arreglo de dependencias vacío).
+  useEffect(() => {
+    // La función del efecto no puede ser async (debe devolver nada o una limpieza),
+    // así que la petición va en una función async interna.
+    async function loadFirstPage() {
+      try {
+        const data = await getCharacters({ page: 1 });
+        setCharacters(data.results);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadFirstPage();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Rick and Morty</Text>
 
-      <Text style={styles.placeholder}>Aquí aparecerá la lista de personajes.</Text>
+      <Text style={styles.placeholder}>
+        {loading ? 'Cargando…' : `Personajes cargados: ${characters.length}`}
+      </Text>
     </View>
   );
 }

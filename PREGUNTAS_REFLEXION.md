@@ -32,15 +32,15 @@ _Escribe tus respuestas debajo de cada pregunta._
 
 1. **¿Qué pasa si omito por completo el arreglo de dependencias?**
 
-> 
+> El efecto se ejecuta después de **cada** render. Como el efecto hace la petición y luego actualiza el estado, eso provoca otro render, que vuelve a ejecutar el efecto... y se queda en un bucle de peticiones a la API.
 
 2. **¿Qué significa dejar el arreglo vacío?**
 
-> 
+> Que el efecto no depende de ningún valor, así que solo se ejecuta una vez, cuando la pantalla se monta (y su limpieza cuando se desmonta). Después, en los pasos 6 y 10, le agregué `reloadKey` y `query` para que también se vuelva a ejecutar al reintentar o al cambiar la búsqueda.
 
 3. **¿Por qué la función que recibe `useEffect` no debe ser `async` directamente?**
 
-> 
+> Porque una función `async` siempre devuelve una promesa, y React espera que el efecto devuelva nada o una función de limpieza. Si le pasamos una promesa, React no puede usarla como limpieza. Por eso declaré una función `async` dentro del efecto (`loadFirstPage`) y la llamé ahí mismo.
 
 ## Paso 5 · FlatList
 
