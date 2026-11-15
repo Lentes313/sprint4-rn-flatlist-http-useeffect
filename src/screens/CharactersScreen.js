@@ -28,6 +28,9 @@ export default function CharactersScreen() {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Pull to refresh: estado propio para no esconder la lista mientras se actualiza.
+  const [refreshing, setRefreshing] = useState(false);
+
   // Carga inicial: al montar la pantalla y cada vez que cambia reloadKey.
   useEffect(() => {
     // La función del efecto no puede ser async (debe devolver nada o una limpieza),
@@ -53,7 +56,7 @@ export default function CharactersScreen() {
   async function loadMore() {
     // No tiene sentido pedir más si ya hay una carga en curso, si la API dijo
     // que no hay página siguiente o si quedó un error pendiente.
-    if (loading || loadingMore || !hasNextPage || error) return;
+    if (loading || loadingMore || refreshing || !hasNextPage || error) return;
 
     const nextPage = page + 1;
     setLoadingMore(true);
@@ -68,6 +71,25 @@ export default function CharactersScreen() {
       setError(err.message);
     } finally {
       setLoadingMore(false);
+    }
+  }
+
+  async function handleRefresh() {
+    // Si se está cargando la página siguiente, se espera a que termine.
+    if (loading || loadingMore) return;
+
+    setRefreshing(true);
+    setError(null);
+    try {
+      const data = await getCharacters({ page: 1 });
+      // Se reemplaza toda la lista y se reinicia la paginación.
+      setCharacters(data.results);
+      setPage(1);
+      setHasNextPage(data.hasNextPage);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -102,6 +124,8 @@ export default function CharactersScreen() {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
       />
     );
   }

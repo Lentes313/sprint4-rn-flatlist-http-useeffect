@@ -68,7 +68,7 @@ _Escribe tus respuestas debajo de cada pregunta._
 
 **¿Por qué usé un estado distinto (`refreshing`) y no el mismo de la carga inicial?**
 
-> 
+> Porque se ven distinto: en la carga inicial quito la lista y muestro el spinner grande, pero al actualizar la lista se tiene que quedar en pantalla mientras arriba aparece el indicador nativo del gesto. Si usara `loading`, la lista desaparecería y se reemplazaría por el spinner. Además, `RefreshControl` necesita su propio booleano en la prop `refreshing` para saber cuándo esconder el indicador.
 
 ## Paso 10 · Búsqueda
 
