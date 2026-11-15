@@ -62,7 +62,7 @@ _Escribe tus respuestas debajo de cada pregunta._
 
 **¿Qué problema aparece si la función de "cargar más" se dispara varias veces seguidas? ¿Cómo lo evité?**
 
-> 
+> `onEndReached` se puede llamar varias veces mientras sigues cerca del final. Si cada llamada hace su petición, se pide la misma página dos o más veces y los personajes se agregan repetidos, lo que además provoca la advertencia de *keys* duplicadas. Lo evité saliendo de la función antes de pedir datos si ya hay una carga en curso (`loading`, `loadingMore` o `refreshing`), si ya no hay página siguiente (`hasNextPage` en `false`) o si hay un error pendiente.
 
 ## Paso 9 · Pull to refresh
 

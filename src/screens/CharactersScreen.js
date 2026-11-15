@@ -23,6 +23,11 @@ export default function CharactersScreen() {
   // Contador que cambia al presionar "Reintentar" para volver a ejecutar el efecto de carga.
   const [reloadKey, setReloadKey] = useState(0);
 
+  // Paginación
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   // Carga inicial: al montar la pantalla y cada vez que cambia reloadKey.
   useEffect(() => {
     // La función del efecto no puede ser async (debe devolver nada o una limpieza),
@@ -33,6 +38,8 @@ export default function CharactersScreen() {
       try {
         const data = await getCharacters({ page: 1 });
         setCharacters(data.results);
+        setPage(1);
+        setHasNextPage(data.hasNextPage);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -43,8 +50,39 @@ export default function CharactersScreen() {
     loadFirstPage();
   }, [reloadKey]);
 
+  async function loadMore() {
+    // No tiene sentido pedir más si ya hay una carga en curso, si la API dijo
+    // que no hay página siguiente o si quedó un error pendiente.
+    if (loading || loadingMore || !hasNextPage || error) return;
+
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    try {
+      const data = await getCharacters({ page: nextPage });
+      // Arreglo nuevo con los anteriores + los nuevos (no se modifica el anterior).
+      setCharacters((current) => [...current, ...data.results]);
+      setPage(nextPage);
+      setHasNextPage(data.hasNextPage);
+    } catch (err) {
+      // Se guarda el error sin borrar los personajes ya cargados.
+      setError(err.message);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   function handleRetry() {
     setReloadKey((current) => current + 1);
+  }
+
+  function renderFooter() {
+    if (loadingMore) {
+      return <ActivityIndicator style={styles.footer} color={COLORS.primary} />;
+    }
+    if (error && characters.length > 0) {
+      return <Text style={styles.footerError}>{error}</Text>;
+    }
+    return null;
   }
 
   let content;
@@ -61,6 +99,9 @@ export default function CharactersScreen() {
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={ItemSeparator}
         ListEmptyComponent={EmptyList}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
       />
     );
   }
