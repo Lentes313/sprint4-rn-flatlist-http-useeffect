@@ -7,6 +7,15 @@ import StateMessage from '../components/StateMessage';
 
 // Estilos disponibles: container, title, input, loader, separator, listContent, footer, footerError
 
+// Definidos fuera de la pantalla para que no se vuelvan a crear en cada render.
+function ItemSeparator() {
+  return <View style={styles.separator} />;
+}
+
+function EmptyList() {
+  return <StateMessage message="No hay personajes que mostrar." />;
+}
+
 export default function CharactersScreen() {
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +59,8 @@ export default function CharactersScreen() {
         renderItem={({ item }) => <CharacterCard character={item} />}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={ItemSeparator}
+        ListEmptyComponent={EmptyList}
       />
     );
   }
